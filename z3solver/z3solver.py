@@ -4,6 +4,7 @@ x, y, z = Reals('x y z')
 
 solver = Solver()
 solver.add(2 * x + 3 * y == 5)
+solver.check()
 solver.add(y + 3 * z > 3)
 solver.add(x - 3 * z <= 10)
 print("Constraint added")
