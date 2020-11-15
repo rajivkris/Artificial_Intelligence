@@ -40,17 +40,20 @@ graph1.add_edge(nodeH, nodeG)
 graph1.add_edge(nodeH, nodeP)
 graph1.add_edge(nodeS, nodeR)
 
+
+
 def update_frontier(node: GraphNode, explored_set, frontier):
     for i in node.children:
         if i.value not in explored_set:
             frontier.append(i)
+
+explored_set = set()
 
 def bfs_search(root_node: GraphNode, search_value):
     if root_node.value == search_value:
         return root_node
 
     frontier = []
-    explored_set = set()
     explored_set.add(root_node.value)
     update_frontier(root_node, explored_set, frontier)
 
@@ -61,9 +64,34 @@ def bfs_search(root_node: GraphNode, search_value):
         explored_set.add(node.value)
         update_frontier(node, explored_set, frontier)
 
-print(bfs_search(nodeS, "A"))
-print(bfs_search(nodeP, "S"))
-print(bfs_search(nodeH, "R"))
+
+explored_set = set()
+
+def dfs_search(root_node: GraphNode, search_value):
+    if (not root_node):
+        return None
+    
+    if (root_node.value == search_value):
+        return root_node
+
+    if (root_node.value in explored_set):
+        return None
+    
+    explored_set.add(root_node.value)
+    children = root_node.children
+    for i in children:
+        node = dfs_search(i, search_value)
+        if not node == None:
+            return node
+    
+    return None
+
+
+print(dfs_search(nodeS, "A"))
+explored_set = set()
+print(dfs_search(nodeP, "S"))
+explored_set = set()
+print(dfs_search(nodeH, "R"))
 print(nodeA)
 print(nodeS)
 print(nodeR)
