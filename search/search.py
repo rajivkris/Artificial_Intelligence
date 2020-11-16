@@ -18,6 +18,7 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
+import heapq
 
 class SearchProblem:
     """
@@ -162,9 +163,45 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    def update_frontier(frontier, item, priority):
+        # If item already in priority queue with higher priority, update its priority and rebuild the heap.
+        # If item already in priority queue with equal or lower priority, do nothing.
+        # If item not in priority queue, do the same thing as self.push.
+        item_found = False
+        for index, (p, c, i) in enumerate(frontier.heap):
+            if i['state'] == item['state']:
+                item_found = True
+                if p <= priority:
+                    break
+                del frontier.heap[index]
+                frontier.heap.append((priority, c, item))
+                heapq.heapify(frontier.heap)
+                break
+        if (not item_found):
+            frontier.push(item, priority)
 
+    frontier = util.PriorityQueue()
+    explored = set()
+    if problem.isGoalState(problem.getStartState()):
+        return []
+    frontier.push({'state' : problem.getStartState(), 'path' : [], 'cost' : 0.0}, 0.0)
+    while not frontier.isEmpty():
+        node = frontier.pop()
+        if problem.isGoalState(node['state']):
+            return node['path']
+        explored.add(node['state'])
+        for i in problem.getSuccessors(node['state']):
+            if i[0] in explored:
+                continue
+            path_cost = node['cost'] + i[2] + heuristic(i[0], problem)
+            path = []
+            path += node['path']
+            path += [i[1]]
+            if frontier.isEmpty():
+                frontier.push({'state' : i[0], 'path' : path, 'cost' : path_cost}, path_cost)
+            else:
+                update_frontier(frontier, {'state' : i[0], 'path' : path, 'cost' : path_cost}, path_cost)
+    return []
 
 # Abbreviations
 bfs = breadthFirstSearch
