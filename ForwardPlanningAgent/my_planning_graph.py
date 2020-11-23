@@ -88,8 +88,6 @@ class LiteralLayer(BaseLiteralLayer):
         
         for actionsA in litA_parent_actions:
             for actionsB in litB_parent_actions:
-                print(actionsA)
-                print(actionsB)
                 if not self.parent_layer.is_mutex(actionsA, actionsB):
                     return False
         return True
@@ -161,7 +159,19 @@ class PlanningGraph:
         Russell-Norvig 10.3.1 (3rd Edition)
         """
         # TODO: implement this function
-        raise NotImplementedError
+        plan_graph = self.fill()
+        used_goal = set()
+        level_sum = 0
+        for level, literal_layer in enumerate(plan_graph.literal_layers):
+            for goal in self.goal:
+                if goal in used_goal:
+                    continue
+                if goal in literal_layer:
+                    level_sum += level
+                    used_goal.add(goal)
+        return level_sum
+
+        
 
     def h_maxlevel(self):
         """ Calculate the max level heuristic for the planning graph
@@ -191,7 +201,17 @@ class PlanningGraph:
         WARNING: you should expect long runtimes using this heuristic with A*
         """
         # TODO: implement maxlevel heuristic
-        raise NotImplementedError
+        plan_graph = self.fill()
+        max_level = 0
+        used_goal = set()
+        for level, literal_layer in enumerate(plan_graph.literal_layers):
+            for goal in self.goal:
+                if goal in used_goal:
+                    continue
+                if goal in literal_layer:
+                    used_goal.add(goal)
+                    max_level = max(max_level, level)
+        return max_level
 
     def h_setlevel(self):
         """ Calculate the set level heuristic for the planning graph
@@ -216,7 +236,30 @@ class PlanningGraph:
         WARNING: you should expect long runtimes using this heuristic on complex problems
         """
         # TODO: implement setlevel heuristic
-        raise NotImplementedError
+        plan_graph = self.fill()
+        for level, literal_layer in enumerate(plan_graph.literal_layers):
+            goals = self.goal.copy()
+            all_goals_met = True
+            for goal in self.goal:
+                if goal in literal_layer:
+                    continue
+                all_goals_met = False
+                break
+
+            if not all_goals_met:
+                continue
+            
+            all_mutex_met = True
+            for goal1 in self.goal:
+                goals.remove(goal1)
+                for goal2 in goals:
+                    if literal_layer.is_mutex(goal1, goal2):
+                        all_mutex_met = False
+                        break
+                if not all_mutex_met:
+                    break
+            if all_goals_met and all_mutex_met:
+                return level
 
     ##############################################################################
     #                     DO NOT MODIFY CODE BELOW THIS LINE                     #
