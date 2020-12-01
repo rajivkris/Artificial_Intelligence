@@ -24,102 +24,127 @@ If you would prefer to complete the exercise in your own local environment, then
 $ python example_have_cake.py
 ```
 
+2. Open `my_planning_graph.py` 
 
+Building a Forward-Planning Agent
+Part of Udacity's Artificial Intelligence Nanodegree.
 
-After you complete each function, test your solution by running `python-m unittest -v`. **YOU SHOULD PASS EACH TEST CASE IN ORDER.** Some of the later test cases depend on correctly implementing the earlier functions, so working on the test cases out of order will be more difficult.
 Planning is an important topic in AI because intelligent agents are expected to automatically plan their own actions in uncertain domains. Planning and scheduling systems are commonly used in automation and logistics operations, robotics and self-driving cars, and for aerospace applications like the Hubble telescope and NASA Mars rovers.
 
+This project is split between implementation and analysis. First I combined symbolic logic and classical search to implement an agent that performs progression search to solve planning problems. Then I experimented with different search algorithms and heuristics, and used the results to answer questions about designing planning systems.
 
+Inconsistent Effects
 Return True if an effect of one action negates an effect of the other
 
-  - Run the search experiment manually (you will be prompted to select problems & search algorithms)
-```
 def _inconsistent_effects(self, actionA, actionB):
 
-```
     for effectA in actionA.effects:
         
         for effectB in actionB.effects:
+            
+            if effectA == ~effectB:
+                return True
+Interference
+Return True if the effects of either action negate the preconditions of the other
 
+def _interference(self, actionA, actionB):
+    
     for effect in actionA.effects:
+        
+        for precondition in actionB.preconditions:
+            
+            if precondition == ~effect:
+                return True
+Competing Needs
+Return True if the preconditions of the actions are all pairwise mutex in the parent layer
 
-### Experiment with the planning algorithms
+def _competing_needs(self, actionA, actionB):
     
     for preconditionA in actionA.preconditions:
 
-The `run_search.py` script allows you to choose any combination of eleven search algorithms (three uninformed and eight with heuristics) on four air cargo problems. The cargo problem instances have different numbers of airplanes, cargo items, and airports that increase the complexity of the domains.
+        for preconditionB in actionB.preconditions:
 
-    - number of actions in the domain
             if self.parent_layer.is_mutex(preconditionA, preconditionB):
                 return True
 Inconsistent Support
+Return True if all ways to achieve both literals are pairwise mutex in the parent layer
 
-- Use the results from the first two problems to determine whether any of the uninformed search algorithms should be excluded for problems 3 and 4. You must run **at least** one uninformed search, two heuristics with greedy best first search, and two heuristics with A* on problems 3 and 4.
+def _inconsistent_support(self, literalA, literalB):
     
     for actionA in self.parents[literalA]:
 
+        for actionB in self.parents[literalB]:
 
+            if not self.parent_layer.is_mutex(actionA, actionB):
                 return False
 
-Your submission for review **must** include a report named "report.pdf" that includes all of the figures (charts or tables) and written responses to the questions below. You may plot multiple results for the same topic on the same chart or use multiple charts. (Hint: you may see more detail by using log space for one or more dimensions of these charts.)
+    return True
 Negation
 Return True if two literals are negations of each other.
 
-- Use a table or chart to analyze the number of nodes expanded against number of actions in the domain
-- Use a table or chart to analyze the search time against the number of actions in the domain
 def _negation(self, literalA, literalB):
     
     if literalA == ~literalB and literalB == ~literalA:
+        return True
+Heuristics
+Level Sum
+Calculate the level sum heuristic for the planning graph
 
-Use your results to answer the following questions:
+The level sum is the sum of the level costs of all the goal literals combined. The "level cost" to achieve any single goal literal is the level at which the literal first appears in the planning graph. Note that the level cost is NOT the minimum number of actions to achieve a single goal literal.
 
+For example, if Goal1 first appears in level 0 of the graph (i.e., it is satisfied at the root of the planning graph) and Goal2 first appears in level 3, then the levelsum is 0 + 3 = 3.
 
+def h_levelsum(self):
 
+    graph = self.fill()
 
+    levelsum = 0
 
+    for goal in self.goal:
         levelsum = levelsum + self.levelcost(graph, goal)
 
+    return levelsum
+Max Level
 Calculate the max level heuristic for the planning graph
 
-## Submission
+The max level is the largest level cost of any single goal fluent. The "level cost" to achieve any single goal literal is the level at which the literal first appears in the planning graph. Note that the level cost is NOT the minimum number of actions to achieve a single goal literal.
 
-```
 For example, if Goal1 first appears in level 1 of the graph and Goal2 first appears in level 3, then the levelsum is max(1, 3) = 3.
 
 def h_maxlevel(self):
 
-**NOTE:** Students who authenticate with Facebook or Google accounts _must_ follow the instructions on the FAQ page [here](https://project-assistant.udacity.com/faq) to obtain an authentication token. (The Workspace already includes instructions for obtaining and configuring your token.)
+    graph = self.fill()
 
     costs = []
 
+    for goal in self.goal:
         costs.append(self.levelcost(graph, goal))
 
-You will find in this project that even trivial planning problems become intractable for domain-independent planning. (The search space for planning problems grows exponentially with problem size.) However, this code can be used as a basis to explore automated planning more deeply by incorporating optimizations or additional planning algorithms (like GraphPlan) to create a more robust planner.
+    return max(costs)
 Set Level
 Calculate the set level heuristic for the planning graph
 
-1. Static code optimizations
-  - Several optimizations have been omitted for simplicity. For example, the `Expr` class used for symbolic representations of the actions and literals is _very_ slow (the time to do basic operations like negating an object can be 1000x slower than more optimal representations). And the inconsistent effects, interference, and negation mutexes are static for a given problem domain; they do not need to be checked each time a layer is added to the planning graph.
 The set level of a planning graph is the first level where all goals appear such that no pair of goal literals are mutex in the last layer of the planning graph.
 
-for plan synthesis by state space and CSP search](https://ac.els-cdn.com/S0004370201001588/1-s2.0-S0004370201001588-main.pdf?_tid=571411a9-859b-4a29-83c7-686d44673011&acdnat=1523663582_550f8fef02020c1c90bf6ef1caef3eaa))
 def h_setlevel(self):
 
-  - Python is slow. Using a faster language can deliver a few orders of magnitude faster performance, which can make non-trivial problem domains feasible. The planning graph is particularly inefficient, in part due to idiosyncrasies of Python with an implementation designed for _clarity_ rather than performance. The [Europa](https://github.com/nasa/europa) planner from NASA should be much faster.
     while not self._is_leveled:
         
         layer = self.literal_layers[-1]
 
-4. Build your own problems
-    - The air cargo domain problems implemented for you were chosen to represent various changes in complexity. There are many other problems that you could implement on your own. For example, the block world problem and spare tire problem in the AIMA textbook. You can also find examples online of planning domain problems. Implement one or more problems beyond the air cargo domain and see how your planner works in those domains.
         if self.goal.issubset(layer):
             
             no_pairmutex = True
 
+            for goal1 in self.goal:
+                for goal2 in self.goal:
                     if layer.is_mutex(goal1, goal2):
+                        no_pairmutex = False
+                        break
 
-### Additional Search Topics
+            if no_pairmutex:
                 return len(self.literal_layers) - 1
 
-- Regression search with GraphPlan (ref. [GraphPlan](https://github.com/aimacode/aima-pseudocode/blob/master/md/GraphPlan.md) in the AIMA pseudocode). Regression search can be very fast in some problem domains, but progression search has been more popular in recent years because it is more easily extended to real-world problems, for example to support resource constraints (like planning for battery recharging in mobile robots).
+        self._extend()
 
+    return len(self.literal_layers) - 1  
