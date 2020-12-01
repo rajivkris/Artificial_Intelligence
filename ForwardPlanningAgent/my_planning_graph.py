@@ -37,14 +37,12 @@ class ActionLayer(BaseActionLayer):
         layers.ActionNode
         """
         for effect_of_A in actionA.effects:
-            for precondition in actionB.preconditions:
-                if effect_of_A == ~precondition:
-                    return True
+            if ~effect_of_A in actionB.preconditions:
+                return True
 
         for effect_of_B in actionB.effects:
-            for precondition in actionA.preconditions:
-                if effect_of_B == ~precondition:
-                    return True
+            if ~effect_of_B in actionA.preconditions:
+                return True
 
         return False
 
@@ -238,7 +236,6 @@ class PlanningGraph:
         # TODO: implement setlevel heuristic
         plan_graph = self.fill()
         for level, literal_layer in enumerate(plan_graph.literal_layers):
-            goals = self.goal.copy()
             all_goals_met = True
             for goal in self.goal:
                 if goal in literal_layer:
@@ -250,6 +247,7 @@ class PlanningGraph:
                 continue
             
             all_mutex_met = True
+            goals = self.goal.copy()
             for goal1 in self.goal:
                 goals.remove(goal1)
                 for goal2 in goals:
